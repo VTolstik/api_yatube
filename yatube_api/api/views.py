@@ -18,12 +18,20 @@ class UpdateDeleteViewSet(mixins.UpdateModelMixin, mixins.DestroyModelMixin,
     def perform_update(self, serializer):
         if serializer.instance.author != self.request.user:
             raise PermissionDenied('Изменение чужого контента запрещено!')
-        super(PostViewSet, self).perform_update(serializer)
+        super(UpdateDeleteViewSet, self).perform_update(serializer)
 
     def perform_destroy(self, serializer):
         if serializer.author != self.request.user:
             raise PermissionDenied('Удаление чужого контента запрещено!')
-        super(PostViewSet, self).perform_destroy(serializer)
+        super(UpdateDeleteViewSet, self).perform_destroy(serializer)
+
+
+class PostViewSet(UpdateDeleteViewSet):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
 
 
 class CommentViewSet(UpdateDeleteViewSet):
@@ -45,18 +53,3 @@ class CommentViewSet(UpdateDeleteViewSet):
         comment_id = self.kwargs.get("pk")
         obj = get_object_or_404(Comment, id=comment_id, post=post_id)
         return obj
-
-    def perform_create(self, serializer):
-        post_id = self.kwargs.get("post_id")
-        post = get_object_or_404(Post, id=post_id)
-        serializer.save(author=self.request.user, post=post)
-
-    def perform_update(self, serializer):
-        if serializer.instance.author != self.request.user:
-            raise PermissionDenied('Изменение чужого комментария запрещено!')
-        super(CommentViewSet, self).perform_update(serializer)
-
-    def perform_destroy(self, serializer):
-        if serializer.author != self.request.user:
-            raise PermissionDenied('Удаление чужого комментария запрещено!')
-        super(CommentViewSet, self).perform_destroy(serializer)
