@@ -1,29 +1,14 @@
 from django.shortcuts import get_object_or_404
-from rest_framework import viewsets, mixins
-from rest_framework.exceptions import PermissionDenied
+from rest_framework import viewsets
 
 from posts.models import Group, Post, Comment
 from .serializers import CommentSerializer, GroupSerializer, PostSerializer
+from .mixins import UpdateDeleteViewSet
 
 
 class GroupViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
-
-
-class UpdateDeleteViewSet(mixins.UpdateModelMixin, mixins.DestroyModelMixin,
-                          mixins.CreateModelMixin, mixins.ListModelMixin,
-                          mixins.RetrieveModelMixin, viewsets.GenericViewSet):
-
-    def perform_update(self, serializer):
-        if serializer.instance.author != self.request.user:
-            raise PermissionDenied('Изменение чужого контента запрещено!')
-        super(UpdateDeleteViewSet, self).perform_update(serializer)
-
-    def perform_destroy(self, serializer):
-        if serializer.author != self.request.user:
-            raise PermissionDenied('Удаление чужого контента запрещено!')
-        super(UpdateDeleteViewSet, self).perform_destroy(serializer)
 
 
 class PostViewSet(UpdateDeleteViewSet):
